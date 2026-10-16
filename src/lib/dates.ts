@@ -43,3 +43,21 @@ export function parseYmd(value: string) {
 
 export const longDate = (date: Date) =>
   `${WEEKDAYS_LONG[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()].toLowerCase()} ${date.getFullYear()}`;
+
+// A note's date + 'HH:MM' time as a local Date, or null without a time.
+export function eventStart(e: { date: string; time: string | null }) {
+  const day = parseYmd(e.date);
+  if (!day || !e.time) return null;
+  const [h, m] = e.time.split(':').map(Number);
+  day.setHours(h, m);
+  return day;
+}
+
+const dayNumber = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
+
+// Reminder text as read when it fires: "Oggi alle 10:30", "Domani alle 10:30" or the full date.
+export function whenText(start: Date, firesAt: Date) {
+  const days = dayNumber(start) - dayNumber(firesAt);
+  const day = days === 0 ? 'Oggi' : days === 1 ? 'Domani' : longDate(start);
+  return `${day} alle ${pad(start.getHours())}:${pad(start.getMinutes())}`;
+}

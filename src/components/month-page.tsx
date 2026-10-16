@@ -2,9 +2,12 @@ import { router } from 'expo-router';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { CalEvent } from '@/lib/db';
 import { MONTHS, WEEKDAYS, daysInMonth, isoWeek, monthAt, toYmd, ymd } from '@/lib/dates';
 import { useColors } from '@/lib/theme';
 import { useEvents } from '@/lib/use-events';
+
+const label = (e: CalEvent) => (e.time ? `${e.time} ${e.title}` : e.title);
 
 type Props = {
   index: number;
@@ -28,13 +31,16 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
         <Pressable onPress={() => onGo(index - 1)} hitSlop={12} accessibilityLabel="Mese precedente">
           <Text style={[styles.arrow, { color: c.accent }]}>‹</Text>
         </Pressable>
-        <Pressable onPress={() => onGo(todayIndex)} accessibilityLabel="Vai a oggi">
+        <Pressable onPress={() => onGo(todayIndex)} accessibilityLabel="Vai a oggi" style={styles.titleButton}>
           <Text style={[styles.title, { color: c.fg }]}>
             {MONTHS[month]} {year}
           </Text>
         </Pressable>
         <Pressable onPress={() => onGo(index + 1)} hitSlop={12} accessibilityLabel="Mese successivo">
           <Text style={[styles.arrow, { color: c.accent }]}>›</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/settings')} hitSlop={12} accessibilityLabel="Impostazioni">
+          <Text style={[styles.arrow, { color: c.muted }]}>⋮</Text>
         </Pressable>
       </View>
       {days.map((day) => {
@@ -64,9 +70,9 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
                 <Fragment key={e.id}>
                   {i > 0 && '  '}
                   {e.color ? (
-                    <Text style={{ backgroundColor: e.color, color: '#fff' }}> {e.title} </Text>
+                    <Text style={{ backgroundColor: e.color, color: '#fff' }}> {label(e)} </Text>
                   ) : (
-                    e.title
+                    label(e)
                   )}
                 </Fragment>
               ))}
@@ -85,11 +91,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 6,
   },
   arrow: { fontSize: 32, lineHeight: 34, paddingHorizontal: 8 },
+  titleButton: { flex: 1, alignItems: 'center' },
   title: { fontSize: 20, fontWeight: '600' },
   row: {
     flex: 1,

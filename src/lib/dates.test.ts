@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { daysInMonth, indexOf, isoWeek, monthAt, parseYmd, ymd } from './dates';
+import { daysInMonth, eventStart, indexOf, isoWeek, monthAt, parseYmd, whenText, ymd } from './dates';
 
 test('iso week numbers', () => {
   expect(isoWeek(2026, 0, 1)).toBe(1); // Thursday
@@ -20,4 +20,13 @@ test('parseYmd rejects bad input', () => {
   expect(parseYmd('2026-02-30')).toBeNull();
   expect(parseYmd('nope')).toBeNull();
   expect(parseYmd('2026-10-16')?.getDate()).toBe(16);
+});
+
+test('reminder text', () => {
+  const start = eventStart({ date: '2026-10-20', time: '10:30' })!;
+  expect(start.getHours()).toBe(10);
+  expect(eventStart({ date: '2026-10-20', time: null })).toBeNull();
+  expect(whenText(start, new Date(2026, 9, 20, 9, 30))).toBe('Oggi alle 10:30');
+  expect(whenText(start, new Date(2026, 9, 19, 10, 30))).toBe('Domani alle 10:30');
+  expect(whenText(start, new Date(2026, 9, 13, 10, 30))).toBe('Martedì 20 ottobre 2026 alle 10:30');
 });

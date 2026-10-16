@@ -1,6 +1,9 @@
 import { useColorScheme } from 'react-native';
 
-const light = {
+type Hex = `#${string}`;
+export type Palette = Record<'bg' | 'fg' | 'muted' | 'line' | 'saturday' | 'sunday' | 'accent', Hex>;
+
+export const light: Palette = {
   bg: '#ffffff',
   fg: '#1a1a1a',
   muted: '#6b6b6b',
@@ -10,7 +13,7 @@ const light = {
   accent: '#1f5fd1',
 };
 
-const dark: typeof light = {
+export const dark: Palette = {
   bg: '#121212',
   fg: '#f2f2f2',
   muted: '#9a9a9a',
