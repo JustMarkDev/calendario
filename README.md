@@ -8,4 +8,5 @@ bun run android     # dev server + Android
 bun run web         # browser preview
 bun run lint
 bun run typecheck
+bun test            # date helpers
 ```
