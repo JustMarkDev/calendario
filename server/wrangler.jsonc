@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "calendario",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": { "TIMEZONE": "Europe/Rome" },
+  // IDs are filled in by the first `wrangler deploy`, which creates the database and namespace.
+  "d1_databases": [{ "binding": "DB", "database_name": "calendario", "migrations_dir": "migrations" }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV" }],
+  "observability": { "enabled": true }
+}
