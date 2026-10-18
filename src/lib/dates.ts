@@ -26,13 +26,6 @@ export const toYmd = (date: Date) => ymd(date.getFullYear(), date.getMonth(), da
 
 export const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
-export function isoWeek(year: number, month: number, day: number) {
-  const d = new Date(Date.UTC(year, month, day));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
-  return Math.ceil(((d.getTime() - yearStart) / 86400000 + 1) / 7);
-}
-
 export function parseYmd(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return null;

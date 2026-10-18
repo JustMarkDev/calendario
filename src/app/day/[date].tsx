@@ -8,7 +8,8 @@ import { addEvent, type CalEvent, deleteEvent, updateEvent } from '@/lib/db';
 import { eventStart, longDate, parseYmd } from '@/lib/dates';
 import { askPermission, REMIND_OPTIONS } from '@/lib/reminders';
 import { syncSoon } from '@/lib/sync';
-import { EVENT_COLORS, useColors } from '@/lib/theme';
+import { eventColorsFor } from '@/lib/colors';
+import { useColors } from '@/lib/theme';
 import { useEvents } from '@/lib/use-events';
 
 const remindLabel = (minutes: number | null) => REMIND_OPTIONS.find((o) => o.value === minutes)?.label;
@@ -88,7 +89,7 @@ export default function Day() {
         style={[styles.input, { color: c.fg, borderColor: c.line }]}
       />
       <View style={styles.swatches}>
-        {EVENT_COLORS.map(({ value: swatch, name }) => (
+        {eventColorsFor(c.accent).map(({ value: swatch, name }) => (
           <Pressable
             key={name}
             onPress={() => setColor(swatch)}
@@ -135,7 +136,7 @@ export default function Day() {
           </Pressable>
         )}
         <Pressable onPress={save} style={[styles.button, { backgroundColor: c.accent, borderColor: c.accent }]}>
-          <Text style={styles.buttonText}>{editingId ? 'Salva' : 'Aggiungi'}</Text>
+          <Text style={[styles.buttonText, { color: c.onAccent }]}>{editingId ? 'Salva' : 'Aggiungi'}</Text>
         </Pressable>
       </View>
 
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 7 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   button: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  buttonText: { fontWeight: '600', fontSize: 16 },
   event: {
     flexDirection: 'row',
     alignItems: 'center',

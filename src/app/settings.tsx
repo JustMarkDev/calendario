@@ -1,31 +1,43 @@
 import * as Clipboard from 'expo-clipboard';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { getMeta } from '@/lib/db';
-import { api, connect, disconnect, getConfig, sync, type SyncConfig } from '@/lib/sync';
-import { useColors } from '@/lib/theme';
+import { api, connect, disconnect, getConfig, type SyncConfig } from '@/lib/sync';
+import { materialAvailable, savePrefs, type ThemeMode, useColors, usePrefs } from '@/lib/theme';
+import { updateAgendaWidget } from '@/widget/agenda';
 
-type Access = { id: string; name: string; scope: 'read' | 'write'; kind: 'key' | 'grant' };
-const SCOPES = [
-  { value: 'read', label: 'Solo lettura' },
-  { value: 'write', label: 'Lettura e scrittura' },
-] as const;
+type Agent = { id: string; name: string; kind: 'key' | 'grant' };
+type Step = 'idle' | 'server' | 'name' | 'done';
+const MODES: { value: ThemeMode; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Chiaro' },
+  { value: 'dark', label: 'Scuro' },
+];
+
+// Pasted into the agent's chat: enough for it to set itself up.
+const instructions = (url: string, key: string) =>
+  `Collegati al mio calendario con MCP (HTTP).
+Indirizzo: ${url}/mcp
+Intestazione: Authorization: Bearer ${key}
+Se sei Claude Code, esegui: claude mcp add --transport http calendario ${url}/mcp --header "Authorization: Bearer ${key}"`;
 
 export default function Settings() {
   const c = useColors();
+  const prefs = usePrefs();
   const db = useSQLiteContext();
   const [config, setConfig] = useState<SyncConfig | null | undefined>(undefined);
-  const [url, setUrl] = useState('');
-  const [key, setKey] = useState('');
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [access, setAccess] = useState<Access[]>([]);
-  const [newName, setNewName] = useState('');
-  const [newScope, setNewScope] = useState<'read' | 'write'>('write');
-  const [created, setCreated] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>('idle');
+  const [url, setUrl] = useState('');
+  const [key, setKey] = useState('');
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const [version, setVersion] = useState(0); // bumped after every action to reload
 
@@ -38,9 +50,9 @@ export default function Settings() {
       if (!active) return;
       setConfig(saved);
       setSyncedAt(at);
-      setAccess([
-        ...res.keys.map((k: Access) => ({ ...k, kind: 'key' })),
-        ...res.grants.map((g: Access) => ({ ...g, kind: 'grant' })),
+      setAgents([
+        ...res.keys.map((k: Agent) => ({ ...k, kind: 'key' })),
+        ...res.grants.map((g: Agent) => ({ ...g, kind: 'grant' })),
       ]);
     })().catch((e) => {
       if (active) setStatus(e.message);
@@ -64,6 +76,15 @@ export default function Settings() {
     }
   };
 
+  const setPrefs = (next: typeof prefs) => savePrefs(db, next).then(() => updateAgendaWidget(db));
+
+  const finish = () => {
+    setStep('idle');
+    setName('');
+    setMessage('');
+    setCopied(false);
+  };
+
   if (config === undefined) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
 
   const input = [styles.input, { color: c.fg, borderColor: c.line }];
@@ -73,48 +94,21 @@ export default function Settings() {
       disabled={busy}
       style={[styles.button, { borderColor: c.accent }, primary && { backgroundColor: c.accent }, busy && { opacity: 0.5 }]}
     >
-      <Text style={{ color: primary ? '#fff' : c.accent, fontWeight: '600' }}>{label}</Text>
+      <Text style={[styles.buttonText, { color: primary ? c.onAccent : c.accent }]}>{label}</Text>
     </Pressable>
-  );
-  const copyRow = (value: string) => (
-    <View style={styles.row}>
-      <Text selectable style={[styles.code, { color: c.fg, borderColor: c.line }]}>
-        {value}
-      </Text>
-      {button('Copia', () => Clipboard.setStringAsync(value))}
-    </View>
   );
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={[styles.heading, { color: c.fg }]}>Sincronizzazione</Text>
-      {config ? (
+      {step === 'idle' && button('Collega un agente', () => setStep(config ? 'name' : 'server'), true)}
+
+      {step === 'server' && (
         <>
-          <Text style={{ color: c.fg }}>Collegato a {config.url}</Text>
-          <Text style={{ color: c.muted }}>
-            {syncedAt
-              ? `Ultima sincronizzazione: ${new Date(Number(syncedAt)).toLocaleString('it-IT')}`
-              : 'Non ancora sincronizzato'}
-          </Text>
-          <View style={styles.row}>
-            {button('Sincronizza ora', () => run(() => sync(db)), true)}
-            {button('Scollega', () =>
-              Alert.alert('Scollegare il server?', 'Le note restano sul telefono.', [
-                { text: 'Annulla', style: 'cancel' },
-                { text: 'Scollega', style: 'destructive', onPress: () => run(() => disconnect(db)) },
-              ]),
-            )}
-          </View>
-        </>
-      ) : (
-        <>
-          <Text style={{ color: c.muted }}>
-            Collega il tuo server per avere le note su più dispositivi e farle usare agli assistenti AI.
-          </Text>
+          <Text style={{ color: c.fg, fontSize: 17 }}>Prima collega il calendario al tuo server.</Text>
           <TextInput
             value={url}
             onChangeText={setUrl}
-            placeholder="https://calendario.nome.workers.dev"
+            placeholder="Indirizzo del server"
             placeholderTextColor={c.muted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -131,96 +125,127 @@ export default function Settings() {
             secureTextEntry
             style={input}
           />
-          <View style={styles.row}>
-            {button('Collega', () => run(() => connect(db, { url: url.trim(), key: key.trim() })), true)}
-          </View>
+          {button(
+            'Continua',
+            () =>
+              run(async () => {
+                await connect(db, { url: url.trim(), key: key.trim() });
+                setStep('name');
+              }),
+            true,
+          )}
+          {button('Annulla', finish)}
         </>
       )}
-      {status && <Text style={{ color: '#d32f2f' }}>{status}</Text>}
 
-      {config && (
+      {step === 'name' && (
         <>
-          <Text style={[styles.heading, { color: c.fg }]}>Accesso agenti</Text>
-          <Text style={{ color: c.muted }}>
-            ChatGPT, Claude e gli altri assistenti si collegano con questo indirizzo (MCP). Al primo accesso chiedono
-            la chiave proprietario.
-          </Text>
-          {copyRow(`${config.url}/mcp`)}
-          <Text style={{ color: c.muted }}>
-            Bot e script fatti a mano usano una chiave personale, con l&apos;MCP qui sopra o con l&apos;API descritta in{' '}
-            {config.url}/openapi.json
-          </Text>
-
-          {access.map((a) => (
-            <View key={a.id} style={[styles.access, { borderColor: c.line }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: c.fg, fontSize: 16 }}>{a.name}</Text>
-                <Text style={{ color: c.muted }}>
-                  {a.kind === 'key' ? 'Chiave' : 'Assistente collegato'} ·{' '}
-                  {SCOPES.find((s) => s.value === a.scope)?.label}
-                </Text>
-              </View>
-              <Pressable
-                hitSlop={8}
-                onPress={() =>
-                  Alert.alert(`Revocare «${a.name}»?`, 'Smetterà subito di funzionare.', [
-                    { text: 'Annulla', style: 'cancel' },
-                    {
-                      text: 'Revoca',
-                      style: 'destructive',
-                      onPress: () => run(() => api(config, `/api/${a.kind === 'key' ? 'keys' : 'grants'}/${a.id}`, { method: 'DELETE' })),
-                    },
-                  ])
-                }
-              >
-                <Text style={{ color: c.muted }}>Revoca</Text>
-              </Pressable>
-            </View>
-          ))}
-
-          <Text style={[styles.subheading, { color: c.fg }]}>Nuova chiave</Text>
+          <Text style={{ color: c.fg, fontSize: 17 }}>Come si chiama l&apos;agente?</Text>
           <TextInput
-            value={newName}
-            onChangeText={setNewName}
-            placeholder="Nome (es. Bot Telegram)"
+            value={name}
+            onChangeText={setName}
+            placeholder="es. Claude Code, Grok, Hermes"
             placeholderTextColor={c.muted}
+            autoFocus
             style={input}
           />
-          <View style={styles.row}>
-            {SCOPES.map((s) => (
-              <Pressable
-                key={s.value}
-                onPress={() => setNewScope(s.value)}
-                accessibilityState={{ selected: newScope === s.value }}
-                style={[styles.chip, { borderColor: newScope === s.value ? c.accent : c.line }]}
-              >
-                <Text style={{ color: newScope === s.value ? c.accent : c.fg }}>{s.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.row}>
-            {button(
-              'Crea chiave',
-              () =>
-                newName.trim() &&
-                run(async () => {
-                  const res = await api(config, '/api/keys', {
-                    method: 'POST',
-                    body: JSON.stringify({ name: newName.trim(), scope: newScope }),
-                  });
-                  setCreated(res.key);
-                  setNewName('');
-                }),
-              true,
-            )}
-          </View>
-          {created && (
-            <>
-              <Text style={{ color: c.fg }}>Copia la chiave adesso: non verrà più mostrata.</Text>
-              {copyRow(created)}
-            </>
+          {button(
+            'Collega',
+            () =>
+              name.trim() &&
+              run(async () => {
+                const saved = (await getConfig())!;
+                const res = await api(saved, '/api/keys', {
+                  method: 'POST',
+                  body: JSON.stringify({ name: name.trim(), scope: 'write' }),
+                });
+                setMessage(instructions(saved.url, res.key));
+                setStep('done');
+              }),
+            true,
           )}
+          {button('Annulla', finish)}
         </>
+      )}
+
+      {step === 'done' && (
+        <>
+          <Text style={{ color: c.fg, fontSize: 17 }}>
+            Copia il messaggio e incollalo nella chat di {name.trim()}: si collegherà da solo.
+          </Text>
+          {button(
+            copied ? 'Copiato ✓' : 'Copia messaggio',
+            () => Clipboard.setStringAsync(message).then(() => setCopied(true)),
+            true,
+          )}
+          {button('Fine', finish)}
+        </>
+      )}
+
+      {status && <Text style={{ color: '#d32f2f' }}>{status}</Text>}
+
+      {agents.length > 0 && <Text style={[styles.heading, { color: c.fg }]}>Agenti collegati</Text>}
+      {agents.map((a) => (
+        <View key={a.id} style={[styles.agent, { borderColor: c.line }]}>
+          <Text style={{ color: c.fg, fontSize: 17, flex: 1 }}>{a.name}</Text>
+          <Pressable
+            hitSlop={8}
+            onPress={() =>
+              Alert.alert(`Scollegare ${a.name}?`, 'Non potrà più vedere il calendario.', [
+                { text: 'Annulla', style: 'cancel' },
+                {
+                  text: 'Scollega',
+                  style: 'destructive',
+                  onPress: () => run(() => api(config!, `/api/${a.kind === 'key' ? 'keys' : 'grants'}/${a.id}`, { method: 'DELETE' })),
+                },
+              ])
+            }
+          >
+            <Text style={{ color: c.muted }}>Scollega</Text>
+          </Pressable>
+        </View>
+      ))}
+
+      <Text style={[styles.heading, { color: c.fg }]}>Aspetto</Text>
+      <View style={styles.row}>
+        {MODES.map((m) => (
+          <Pressable
+            key={m.value}
+            onPress={() => setPrefs({ ...prefs, mode: m.value })}
+            accessibilityState={{ selected: prefs.mode === m.value }}
+            style={[styles.chip, prefs.mode === m.value ? { backgroundColor: c.accent } : { borderColor: c.line }]}
+          >
+            <Text style={{ color: prefs.mode === m.value ? c.onAccent : c.fg, fontSize: 16 }}>{m.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {materialAvailable && (
+        <View style={styles.row}>
+          <Text style={{ color: c.fg, fontSize: 17, flex: 1 }}>Colori Material You</Text>
+          <Switch
+            value={prefs.materialYou}
+            onValueChange={(materialYou) => setPrefs({ ...prefs, materialYou })}
+            trackColor={{ true: c.accent, false: c.muted }}
+            thumbColor={prefs.materialYou ? c.onAccent : undefined}
+          />
+        </View>
+      )}
+
+      {config && (
+        <Pressable
+          style={styles.footer}
+          onPress={() =>
+            Alert.alert('Scollegare il server?', 'Le note restano sul telefono.', [
+              { text: 'Annulla', style: 'cancel' },
+              { text: 'Scollega', style: 'destructive', onPress: () => run(() => disconnect(db)) },
+            ])
+          }
+        >
+          <Text style={{ color: c.muted, fontSize: 13 }}>
+            {syncedAt ? `Sincronizzato ${new Date(Number(syncedAt)).toLocaleString('it-IT')}` : 'Non ancora sincronizzato'}
+            {' · Scollega server'}
+          </Text>
+        </Pressable>
       )}
     </ScrollView>
   );
@@ -228,12 +253,12 @@ export default function Settings() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12, paddingBottom: 48 },
-  heading: { fontSize: 20, fontWeight: '600', marginTop: 8 },
-  subheading: { fontSize: 17, fontWeight: '600', marginTop: 8 },
+  heading: { fontSize: 20, fontWeight: '600', marginTop: 16 },
   input: { fontSize: 17, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
-  row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  button: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
-  chip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 7 },
-  code: { flex: 1, fontFamily: 'monospace', fontSize: 13, borderWidth: 1, borderRadius: 8, padding: 8 },
-  access: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 10 },
+  button: { borderWidth: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  buttonText: { fontSize: 17, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chip: { flex: 1, alignItems: 'center', borderWidth: 1, borderColor: 'transparent', borderRadius: 18, paddingVertical: 8 },
+  agent: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
+  footer: { marginTop: 24 },
 });

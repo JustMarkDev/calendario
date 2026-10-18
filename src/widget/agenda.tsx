@@ -4,7 +4,7 @@ import { FlexWidget, requestWidgetUpdate, TextWidget, type WidgetTaskHandler } f
 
 import { MONTHS, toYmd, WEEKDAYS } from '@/lib/dates';
 import { type CalEvent, listBetween, openDb } from '@/lib/db';
-import { dark, light, type Palette } from '@/lib/theme';
+import { palette, type Palette, readPrefs } from '@/lib/theme';
 
 const NAME = 'Agenda';
 const ROW_HEIGHT = 26; // dp, matches fontSize 13 plus breathing room
@@ -76,7 +76,10 @@ async function render(db: SQLiteDatabase, height: number | undefined) {
       .map(label)
       .join('  ·  '),
   }));
-  return { light: <Agenda days={days} c={light} />, dark: <Agenda days={days} c={dark} /> };
+  // The launcher picks light or dark by the system; a forced app theme wins over that.
+  const { mode, materialYou } = await readPrefs(db);
+  const c = (isDark: boolean) => palette(mode === 'system' ? isDark : mode === 'dark', materialYou);
+  return { light: <Agenda days={days} c={c(false)} />, dark: <Agenda days={days} c={c(true)} /> };
 }
 
 export const updateAgendaWidget = (db: SQLiteDatabase) =>

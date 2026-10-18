@@ -1,13 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { daysInMonth, eventStart, indexOf, isoWeek, monthAt, parseYmd, whenText, ymd } from './dates';
-
-test('iso week numbers', () => {
-  expect(isoWeek(2026, 0, 1)).toBe(1); // Thursday
-  expect(isoWeek(2027, 0, 1)).toBe(53); // Friday belongs to 2026-W53
-  expect(isoWeek(2024, 11, 30)).toBe(1); // Monday belongs to 2025-W01
-  expect(isoWeek(2026, 9, 18)).toBe(42); // Sunday
-});
+import { daysInMonth, eventStart, indexOf, monthAt, parseYmd, whenText, ymd } from './dates';
 
 test('month helpers', () => {
   expect(daysInMonth(2024, 1)).toBe(29);

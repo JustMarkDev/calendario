@@ -3,11 +3,9 @@ import { z } from 'zod';
 // Same palette as the app (src/lib/theme.ts). Agents use the Italian names, the database stores hex.
 export const COLORS = {
   rosso: '#d32f2f',
-  arancione: '#ef6c00',
   verde: '#2e7d32',
   blu: '#1565c0',
   viola: '#6a1b9a',
-  marrone: '#5d4037',
 } as const;
 type ColorName = keyof typeof COLORS;
 const COLOR_NAMES = Object.keys(COLORS) as [ColorName, ...ColorName[]];

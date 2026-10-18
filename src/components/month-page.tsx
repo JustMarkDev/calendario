@@ -3,7 +3,7 @@ import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { CalEvent } from '@/lib/db';
-import { MONTHS, WEEKDAYS, daysInMonth, isoWeek, monthAt, toYmd, ymd } from '@/lib/dates';
+import { MONTHS, WEEKDAYS, daysInMonth, monthAt, toYmd, ymd } from '@/lib/dates';
 import { useColors } from '@/lib/theme';
 import { useEvents } from '@/lib/use-events';
 
@@ -77,9 +77,6 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
                 </Fragment>
               ))}
             </Text>
-            {weekday === 0 && (
-              <Text style={[styles.week, { color: c.muted }]}>{isoWeek(year, month, day)}</Text>
-            )}
           </Pressable>
         );
       })}
@@ -108,5 +105,4 @@ const styles = StyleSheet.create({
   day: { width: 24, fontSize: 15, fontWeight: '600', textAlign: 'right' },
   weekday: { width: 22, fontSize: 13 },
   events: { flex: 1, fontSize: 14 },
-  week: { fontSize: 12 },
 });

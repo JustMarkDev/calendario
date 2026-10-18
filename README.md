@@ -32,6 +32,6 @@ Local development: put `OWNER_KEY=…` in `server/.dev.vars`, then `bunx wrangle
 ## Connecting agents
 
 - **Hosted assistants** (ChatGPT, Claude and anything else that supports remote MCP with OAuth): add `https://<your-worker>/mcp` as a connector. The consent page asks for the owner key and lets you pick read-only or read-write.
-- **Hand-built bots and scripts**: create a key in the app (Impostazioni → Accesso agenti), then either use the same MCP endpoint with `Authorization: Bearer cal_…`, or the plain HTTP API described at `https://<your-worker>/openapi.json`.
+- **Agents configured by hand** (Claude Code, Codex, Hermes, Grok bots…): create a key per agent in the app (Impostazioni → Agenti IA) and give the agent the MCP endpoint with `Authorization: Bearer cal_…`. For Claude Code the app shows the ready-made `claude mcp add` command. Agents without MCP can use the plain HTTP API described at `https://<your-worker>/openapi.json`.
 
 Every connection shows up in the app and can be revoked there. MCP tools: `list_events`, `search_events`, and for read-write access `add_event`, `update_event`, `delete_event`. Deletes are soft, so they sync to the phone like any other change.
