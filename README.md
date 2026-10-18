@@ -2,6 +2,10 @@
 
 Android calendar app built with Expo. Each month is a vertical list with one line per day, like a paper planner. Notes live on the phone (SQLite) and sync with a small Cloudflare Worker, which also lets AI agents read and write the calendar.
 
+## Download
+
+Get the latest Android APK from [Releases](https://github.com/JustMarkDev/calendario/releases/latest). Play Store release coming later.
+
 ## App
 
 ```bash
@@ -9,8 +13,10 @@ bun install
 bunx expo run:android   # development build (needed for the widget, reminders and background sync)
 bun run lint
 bun run typecheck
-bun test                # date helpers
+bun test                # date and color helpers
 ```
+
+Release builds run on EAS: `bunx eas-cli build -p android --profile apk` for the APK attached to GitHub releases, `--profile production` for the Play Store bundle. The signing key lives in EAS.
 
 The app works fully offline. To sync, open ⋮ → Impostazioni and enter the server address and the owner key.
 
