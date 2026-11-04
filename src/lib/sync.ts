@@ -1,7 +1,7 @@
-import * as SecureStore from 'expo-secure-store';
-import type { SQLiteDatabase } from 'expo-sqlite';
+import * as SecureStore from "expo-secure-store";
+import type { SQLiteDatabase } from "expo-sqlite";
 
-import { getMeta } from './db';
+import { getMeta } from "./db";
 
 export type SyncConfig = { url: string; key: string };
 type Row = {
@@ -15,7 +15,7 @@ type Row = {
   deleted: number;
 };
 
-const CONFIG = 'sync-config';
+const CONFIG = "sync-config";
 const BATCH = 500; // server limit per request
 
 export async function getConfig(): Promise<SyncConfig | null> {
@@ -24,10 +24,10 @@ export async function getConfig(): Promise<SyncConfig | null> {
 }
 
 export async function connect(db: SQLiteDatabase, input: SyncConfig) {
-  const url = input.url.replace(/\/+$/, '');
+  const url = input.url.replace(/\/+$/, "");
   const config = { key: input.key, url: /^https?:\/\//.test(url) ? url : `https://${url}` };
-  const me = await api(config, '/api/me');
-  if (me.access !== 'owner') throw new Error('Serve la chiave proprietario, non una chiave agente');
+  const me = await api(config, "/api/me");
+  if (me.access !== "owner") throw new Error("Serve la chiave proprietario, non una chiave agente");
   await SecureStore.setItemAsync(CONFIG, JSON.stringify(config));
   await sync(db);
 }
@@ -35,7 +35,9 @@ export async function connect(db: SQLiteDatabase, input: SyncConfig) {
 // Local notes stay; everything is marked unsynced so a later connect pushes it all.
 export async function disconnect(db: SQLiteDatabase) {
   await SecureStore.deleteItemAsync(CONFIG);
-  await db.execAsync("UPDATE events SET dirty = 1; DELETE FROM meta WHERE key IN ('cursor', 'synced_at');");
+  await db.execAsync(
+    "UPDATE events SET dirty = 1; DELETE FROM meta WHERE key IN ('cursor', 'synced_at');",
+  );
 }
 
 export async function api(config: SyncConfig, path: string, init?: RequestInit) {
@@ -43,13 +45,16 @@ export async function api(config: SyncConfig, path: string, init?: RequestInit) 
   try {
     res = await fetch(config.url + path, {
       ...init,
-      headers: { Authorization: `Bearer ${config.key}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${config.key}`, "Content-Type": "application/json" },
     });
   } catch {
-    throw new Error('Server non raggiungibile');
+    throw new Error("Server non raggiungibile");
   }
-  if (res.status === 401) throw new Error('Chiave non valida');
-  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `Errore del server (${res.status})`);
+  if (res.status === 401) throw new Error("Chiave non valida");
+  if (!res.ok)
+    throw new Error(
+      (await res.json().catch(() => null))?.error ?? `Errore del server (${res.status})`,
+    );
   return res.status === 204 ? null : res.json();
 }
 
@@ -80,19 +85,22 @@ async function run(db: SQLiteDatabase) {
   if (!config) return;
   let full: boolean;
   do {
-    const since = Number((await getMeta(db, 'cursor')) ?? 0);
+    const since = Number((await getMeta(db, "cursor")) ?? 0);
     const dirty = await db.getAllAsync<Row>(
       `SELECT id, date, time, title, color, remind, updated_at, deleted FROM events WHERE dirty = 1 LIMIT ${BATCH}`,
     );
-    const res: { cursor: number; changes: Row[] } = await api(config, '/api/sync', {
-      method: 'POST',
+    const res: { cursor: number; changes: Row[] } = await api(config, "/api/sync", {
+      method: "POST",
       body: JSON.stringify({ since, changes: dirty }),
     });
     // Same connection as the screens, so their change listeners (and the reminder refresh) fire.
     await db.withTransactionAsync(async () => {
       // Only clear rows not edited again while the request was in flight.
       for (const r of dirty) {
-        await db.runAsync('UPDATE events SET dirty = 0 WHERE id = ? AND updated_at = ?', [r.id, r.updated_at]);
+        await db.runAsync("UPDATE events SET dirty = 0 WHERE id = ? AND updated_at = ?", [
+          r.id,
+          r.updated_at,
+        ]);
       }
       // The server already resolved conflicts; a local edit made meanwhile is newer and stays.
       for (const r of res.changes) {
@@ -106,10 +114,10 @@ async function run(db: SQLiteDatabase) {
           [r.id, r.date, r.time, r.title, r.color, r.remind, r.updated_at, r.deleted],
         );
       }
-      await db.runAsync("INSERT OR REPLACE INTO meta (key, value) VALUES ('cursor', ?), ('synced_at', ?)", [
-        String(res.cursor),
-        String(Date.now()),
-      ]);
+      await db.runAsync(
+        "INSERT OR REPLACE INTO meta (key, value) VALUES ('cursor', ?), ('synced_at', ?)",
+        [String(res.cursor), String(Date.now())],
+      );
     });
     full = dirty.length === BATCH;
   } while (full);

@@ -1,11 +1,11 @@
-import { router } from 'expo-router';
-import { Fragment } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from "expo-router";
+import { Fragment } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { CalEvent } from '@/lib/db';
-import { MONTHS, WEEKDAYS, daysInMonth, monthAt, toYmd, ymd } from '@/lib/dates';
-import { useColors } from '@/lib/theme';
-import { useEvents } from '@/lib/use-events';
+import type { CalEvent } from "@/lib/db";
+import { MONTHS, WEEKDAYS, daysInMonth, monthAt, toYmd, ymd } from "@/lib/dates";
+import { useColors } from "@/lib/theme";
+import { useEvents } from "@/lib/use-events";
 
 const label = (e: CalEvent) => (e.time ? `${e.time} ${e.title}` : e.title);
 
@@ -22,24 +22,41 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
   const c = useColors();
   const { year, month } = monthAt(index);
   const events = useEvents(ymd(year, month, 1).slice(0, 7));
+  // oxlint-disable-next-line react/purity -- "today" is intentionally read on every render
   const today = toYmd(new Date());
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
 
   return (
     <View style={{ width, height, backgroundColor: c.bg }}>
       <View style={styles.header}>
-        <Pressable onPress={() => onGo(index - 1)} hitSlop={12} accessibilityLabel="Mese precedente">
+        <Pressable
+          onPress={() => onGo(index - 1)}
+          hitSlop={12}
+          accessibilityLabel="Mese precedente"
+        >
           <Text style={[styles.arrow, { color: c.accent }]}>‹</Text>
         </Pressable>
-        <Pressable onPress={() => onGo(todayIndex)} accessibilityLabel="Vai a oggi" style={styles.titleButton}>
+        <Pressable
+          onPress={() => onGo(todayIndex)}
+          accessibilityLabel="Vai a oggi"
+          style={styles.titleButton}
+        >
           <Text style={[styles.title, { color: c.fg }]}>
             {MONTHS[month]} {year}
           </Text>
         </Pressable>
-        <Pressable onPress={() => onGo(index + 1)} hitSlop={12} accessibilityLabel="Mese successivo">
+        <Pressable
+          onPress={() => onGo(index + 1)}
+          hitSlop={12}
+          accessibilityLabel="Mese successivo"
+        >
           <Text style={[styles.arrow, { color: c.accent }]}>›</Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/settings')} hitSlop={12} accessibilityLabel="Impostazioni">
+        <Pressable
+          onPress={() => router.push("/settings")}
+          hitSlop={12}
+          accessibilityLabel="Impostazioni"
+        >
           <Text style={[styles.arrow, { color: c.muted }]}>⋮</Text>
         </Pressable>
       </View>
@@ -51,7 +68,7 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
         return (
           <Pressable
             key={day}
-            onPress={() => router.push({ pathname: '/day/[date]', params: { date } })}
+            onPress={() => router.push({ pathname: "/day/[date]", params: { date } })}
             style={[
               styles.row,
               { borderColor: c.line },
@@ -68,9 +85,9 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
             <Text numberOfLines={1} style={[styles.events, { color: c.fg }]}>
               {dayEvents.map((e, i) => (
                 <Fragment key={e.id}>
-                  {i > 0 && '  '}
+                  {i > 0 && "  "}
                   {e.color ? (
-                    <Text style={{ backgroundColor: e.color, color: '#fff' }}> {label(e)} </Text>
+                    <Text style={{ backgroundColor: e.color, color: "#fff" }}> {label(e)} </Text>
                   ) : (
                     label(e)
                   )}
@@ -86,23 +103,23 @@ export function MonthPage({ index, width, height, onGo, todayIndex }: Props) {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
   arrow: { fontSize: 32, lineHeight: 34, paddingHorizontal: 8 },
-  titleButton: { flex: 1, alignItems: 'center' },
-  title: { fontSize: 20, fontWeight: '600' },
+  titleButton: { flex: 1, alignItems: "center" },
+  title: { fontSize: 20, fontWeight: "600" },
   row: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 8,
     gap: 6,
   },
-  day: { width: 24, fontSize: 15, fontWeight: '600', textAlign: 'right' },
+  day: { width: 24, fontSize: 15, fontWeight: "600", textAlign: "right" },
   weekday: { width: 22, fontSize: 13 },
   events: { flex: 1, fontSize: 14 },
 });

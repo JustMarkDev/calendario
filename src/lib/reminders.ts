@@ -1,18 +1,18 @@
-import * as Notifications from 'expo-notifications';
-import type { SQLiteDatabase } from 'expo-sqlite';
+import * as Notifications from "expo-notifications";
+import type { SQLiteDatabase } from "expo-sqlite";
 
-import { eventStart, toYmd, whenText } from './dates';
-import type { CalEvent } from './db';
+import { eventStart, toYmd, whenText } from "./dates";
+import type { CalEvent } from "./db";
 
-const CHANNEL = 'promemoria';
+const CHANNEL = "promemoria";
 const MAX_SCHEDULED = 50;
 
 export const REMIND_OPTIONS = [
-  { value: null, label: 'Nessun promemoria' },
+  { value: null, label: "Nessun promemoria" },
   { value: 0, label: "All'ora" },
-  { value: 15, label: '15 min prima' },
-  { value: 60, label: '1 ora prima' },
-  { value: 24 * 60, label: 'Il giorno prima' },
+  { value: 15, label: "15 min prima" },
+  { value: 60, label: "1 ora prima" },
+  { value: 24 * 60, label: "Il giorno prima" },
 ];
 
 Notifications.setNotificationHandler({
@@ -26,8 +26,7 @@ Notifications.setNotificationHandler({
 
 const createChannel = () =>
   Notifications.setNotificationChannelAsync(CHANNEL, {
-    name: 'Promemoria',
-    // eslint-disable-next-line import/namespace -- re-exported through export *, which the rule can't follow
+    name: "Promemoria",
     importance: Notifications.AndroidImportance.HIGH,
   });
 
@@ -43,7 +42,7 @@ export async function scheduleReminders(db: SQLiteDatabase) {
   if (!(await Notifications.getPermissionsAsync()).granted) return;
   await createChannel();
   const rows = await db.getAllAsync<CalEvent>(
-    'SELECT id, date, time, title, color, remind FROM events WHERE deleted = 0 AND time IS NOT NULL AND remind IS NOT NULL AND date >= ?',
+    "SELECT id, date, time, title, color, remind FROM events WHERE deleted = 0 AND time IS NOT NULL AND remind IS NOT NULL AND date >= ?",
     [toYmd(new Date())],
   );
   const now = Date.now();
@@ -61,7 +60,11 @@ export async function scheduleReminders(db: SQLiteDatabase) {
     await Notifications.scheduleNotificationAsync({
       identifier: e.id,
       content: { title: e.title, body: whenText(start, at), data: { url: `/day/${e.date}` } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: at,
+        channelId: CHANNEL,
+      },
     });
   }
 }

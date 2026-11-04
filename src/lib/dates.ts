@@ -1,9 +1,27 @@
 export const MONTHS = [
-  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+  "Gennaio",
+  "Febbraio",
+  "Marzo",
+  "Aprile",
+  "Maggio",
+  "Giugno",
+  "Luglio",
+  "Agosto",
+  "Settembre",
+  "Ottobre",
+  "Novembre",
+  "Dicembre",
 ];
-export const WEEKDAYS = ['Do', 'Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa'];
-const WEEKDAYS_LONG = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+export const WEEKDAYS = ["Do", "Lu", "Ma", "Me", "Gi", "Ve", "Sa"];
+const WEEKDAYS_LONG = [
+  "Domenica",
+  "Lunedì",
+  "Martedì",
+  "Mercoledì",
+  "Giovedì",
+  "Venerdì",
+  "Sabato",
+];
 
 // Pager months are indexes from January 2000 through December 2099.
 const FIRST_YEAR = 2000;
@@ -16,7 +34,7 @@ export const monthAt = (index: number) => ({
 
 export const indexOf = (date: Date) => (date.getFullYear() - FIRST_YEAR) * 12 + date.getMonth();
 
-const pad = (n: number) => String(n).padStart(2, '0');
+const pad = (n: number) => String(n).padStart(2, "0");
 
 // Dates are stored as local 'YYYY-MM-DD' strings so time zones never shift a day.
 export const ymd = (year: number, month: number, day: number) =>
@@ -41,7 +59,7 @@ export const longDate = (date: Date) =>
 export function eventStart(e: { date: string; time: string | null }) {
   const day = parseYmd(e.date);
   if (!day || !e.time) return null;
-  const [h, m] = e.time.split(':').map(Number);
+  const [h, m] = e.time.split(":").map(Number);
   day.setHours(h, m);
   return day;
 }
@@ -51,6 +69,6 @@ const dayNumber = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate
 // Reminder text as read when it fires: "Oggi alle 10:30", "Domani alle 10:30" or the full date.
 export function whenText(start: Date, firesAt: Date) {
   const days = dayNumber(start) - dayNumber(firesAt);
-  const day = days === 0 ? 'Oggi' : days === 1 ? 'Domani' : longDate(start);
+  const day = days === 0 ? "Oggi" : days === 1 ? "Domani" : longDate(start);
   return `${day} alle ${pad(start.getHours())}:${pad(start.getMinutes())}`;
 }

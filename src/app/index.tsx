@@ -1,11 +1,11 @@
-import { StatusBar } from 'expo-status-bar';
-import { useRef, useState } from 'react';
-import { FlatList, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from "expo-status-bar";
+import { useRef, useState } from "react";
+import { FlatList, View, useWindowDimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { MonthPage } from '@/components/month-page';
-import { MONTH_COUNT, indexOf } from '@/lib/dates';
-import { useColors } from '@/lib/theme';
+import { MonthPage } from "@/components/month-page";
+import { MONTH_COUNT, indexOf } from "@/lib/dates";
+import { useColors } from "@/lib/theme";
 
 const MONTH_INDEXES = Array.from({ length: MONTH_COUNT }, (_, i) => i);
 
@@ -14,6 +14,7 @@ export default function Calendar() {
   const { width } = useWindowDimensions();
   const [height, setHeight] = useState(0);
   const list = useRef<FlatList<number>>(null);
+  // oxlint-disable-next-line react/purity -- "today" is intentionally read on every render
   const todayIndex = indexOf(new Date());
 
   const go = (index: number) => {
@@ -38,7 +39,13 @@ export default function Calendar() {
             maxToRenderPerBatch={2}
             windowSize={3}
             renderItem={({ item }) => (
-              <MonthPage index={item} width={width} height={height} onGo={go} todayIndex={todayIndex} />
+              <MonthPage
+                index={item}
+                width={width}
+                height={height}
+                onGo={go}
+                todayIndex={todayIndex}
+              />
             )}
           />
         )}

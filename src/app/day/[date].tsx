@@ -1,26 +1,27 @@
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite';
-import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import { useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { addEvent, type CalEvent, deleteEvent, updateEvent } from '@/lib/db';
-import { eventStart, longDate, parseYmd } from '@/lib/dates';
-import { askPermission, REMIND_OPTIONS } from '@/lib/reminders';
-import { syncSoon } from '@/lib/sync';
-import { eventColorsFor } from '@/lib/colors';
-import { useColors } from '@/lib/theme';
-import { useEvents } from '@/lib/use-events';
+import { addEvent, type CalEvent, deleteEvent, updateEvent } from "@/lib/db";
+import { eventStart, longDate, parseYmd } from "@/lib/dates";
+import { askPermission, REMIND_OPTIONS } from "@/lib/reminders";
+import { syncSoon } from "@/lib/sync";
+import { eventColorsFor } from "@/lib/colors";
+import { useColors } from "@/lib/theme";
+import { useEvents } from "@/lib/use-events";
 
-const remindLabel = (minutes: number | null) => REMIND_OPTIONS.find((o) => o.value === minutes)?.label;
+const remindLabel = (minutes: number | null) =>
+  REMIND_OPTIONS.find((o) => o.value === minutes)?.label;
 
 export default function Day() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const parsed = parseYmd(date);
   const c = useColors();
   const db = useSQLiteContext();
-  const events = useEvents(parsed ? date : 'invalid');
-  const [title, setTitle] = useState('');
+  const events = useEvents(parsed ? date : "invalid");
+  const [title, setTitle] = useState("");
   const [color, setColor] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [remind, setRemind] = useState<number | null>(null);
@@ -30,9 +31,9 @@ export default function Day() {
     return <Text style={{ color: c.fg, padding: 16 }}>Data non valida</Text>;
   }
 
-  const load = (e: Pick<CalEvent, 'id' | 'title' | 'color' | 'time' | 'remind'> | null) => {
+  const load = (e: Pick<CalEvent, "id" | "title" | "color" | "time" | "remind"> | null) => {
     setEditingId(e?.id ?? null);
-    setTitle(e?.title ?? '');
+    setTitle(e?.title ?? "");
     setColor(e?.color ?? null);
     setTime(e?.time ?? null);
     setRemind(e?.remind ?? null);
@@ -50,13 +51,15 @@ export default function Day() {
   };
 
   const pickTime = () => {
-    const current = eventStart({ date, time: time ?? '09:00' })!;
+    const current = eventStart({ date, time: time ?? "09:00" })!;
     DateTimePickerAndroid.open({
       value: current,
-      mode: 'time',
+      mode: "time",
       is24Hour: true,
       onValueChange: (_, picked) =>
-        setTime(`${String(picked.getHours()).padStart(2, '0')}:${String(picked.getMinutes()).padStart(2, '0')}`),
+        setTime(
+          `${String(picked.getHours()).padStart(2, "0")}:${String(picked.getMinutes()).padStart(2, "0")}`,
+        ),
     });
   };
 
@@ -64,8 +67,8 @@ export default function Day() {
     setRemind(value);
     if (value !== null && !(await askPermission())) {
       Alert.alert(
-        'Notifiche disattivate',
-        'Per ricevere i promemoria, attiva le notifiche per Calendario nelle impostazioni del telefono.',
+        "Notifiche disattivate",
+        "Per ricevere i promemoria, attiva le notifiche per Calendario nelle impostazioni del telefono.",
       );
     }
   };
@@ -105,8 +108,13 @@ export default function Day() {
       </View>
 
       <View style={styles.row}>
-        <Pressable onPress={pickTime} style={[styles.chip, { borderColor: time ? c.accent : c.line }]}>
-          <Text style={{ color: time ? c.accent : c.fg, fontSize: 16 }}>{time ? `Ore ${time}` : 'Aggiungi ora'}</Text>
+        <Pressable
+          onPress={pickTime}
+          style={[styles.chip, { borderColor: time ? c.accent : c.line }]}
+        >
+          <Text style={{ color: time ? c.accent : c.fg, fontSize: 16 }}>
+            {time ? `Ore ${time}` : "Aggiungi ora"}
+          </Text>
         </Pressable>
         {time && (
           <Pressable onPress={() => setTime(null)} hitSlop={8} accessibilityLabel="Togli l'ora">
@@ -135,8 +143,13 @@ export default function Day() {
             <Text style={{ color: c.fg }}>Annulla</Text>
           </Pressable>
         )}
-        <Pressable onPress={save} style={[styles.button, { backgroundColor: c.accent, borderColor: c.accent }]}>
-          <Text style={[styles.buttonText, { color: c.onAccent }]}>{editingId ? 'Salva' : 'Aggiungi'}</Text>
+        <Pressable
+          onPress={save}
+          style={[styles.button, { backgroundColor: c.accent, borderColor: c.accent }]}
+        >
+          <Text style={[styles.buttonText, { color: c.onAccent }]}>
+            {editingId ? "Salva" : "Aggiungi"}
+          </Text>
         </Pressable>
       </View>
 
@@ -146,11 +159,13 @@ export default function Day() {
             <View style={[styles.dot, { backgroundColor: e.color ?? c.muted }]} />
             <View style={styles.eventText}>
               <Text style={{ color: c.fg, fontSize: 17 }}>
-                {e.time && <Text style={{ fontWeight: '600' }}>{e.time} </Text>}
+                {e.time && <Text style={{ fontWeight: "600" }}>{e.time} </Text>}
                 {e.title}
               </Text>
               {e.time && e.remind !== null && (
-                <Text style={{ color: c.muted, fontSize: 14 }}>Promemoria: {remindLabel(e.remind)?.toLowerCase()}</Text>
+                <Text style={{ color: c.muted, fontSize: 14 }}>
+                  Promemoria: {remindLabel(e.remind)?.toLowerCase()}
+                </Text>
               )}
             </View>
           </Pressable>
@@ -173,22 +188,28 @@ export default function Day() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12 },
-  input: { fontSize: 17, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
-  swatches: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  input: {
+    fontSize: 17,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  swatches: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
   swatch: { width: 36, height: 36, borderRadius: 18, borderWidth: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  row: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8 },
   chip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 7 },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  actions: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   button: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 18, paddingVertical: 10 },
-  buttonText: { fontWeight: '600', fontSize: 16 },
+  buttonText: { fontWeight: "600", fontSize: 16 },
   event: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     gap: 12,
   },
-  eventBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  eventBody: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   dot: { width: 12, height: 12, borderRadius: 6 },
   eventText: { flexShrink: 1 },
 });
