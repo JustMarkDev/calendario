@@ -9,12 +9,12 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@cloudflare/workers-oauth-provider": "^1.2.3",
-    "@modelcontextprotocol/server": "^2.3.1",
+    "@cloudflare/workers-oauth-provider": "^1.2.4",
+    "@modelcontextprotocol/server": "^2.4.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "typescript": "~6.0.3",
-    "wrangler": "^4.151.1"
+    "typescript": "~7.0.2",
+    "wrangler": "^4.153.0"
   }
 }
