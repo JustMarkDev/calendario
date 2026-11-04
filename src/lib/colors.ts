@@ -1,10 +1,10 @@
 // Event highlight colors; null means plain text.
 export const EVENT_COLORS = [
-  { value: null, name: 'Nessun colore' },
-  { value: '#d32f2f', name: 'Rosso' },
-  { value: '#2e7d32', name: 'Verde' },
-  { value: '#1565c0', name: 'Blu' },
-  { value: '#6a1b9a', name: 'Viola' },
+  { value: null, name: "Nessun colore" },
+  { value: "#d32f2f", name: "Rosso" },
+  { value: "#2e7d32", name: "Verde" },
+  { value: "#1565c0", name: "Blu" },
+  { value: "#6a1b9a", name: "Viola" },
 ];
 
 function hueSat(hex: string) {

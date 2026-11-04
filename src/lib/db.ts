@@ -1,6 +1,6 @@
-import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
-export const DATABASE_NAME = 'calendario.db';
+export const DATABASE_NAME = "calendario.db";
 
 export type CalEvent = {
   id: string;
@@ -10,13 +10,13 @@ export type CalEvent = {
   color: string | null;
   remind: number | null; // minutes before time
 };
-export type EventFields = Omit<CalEvent, 'id' | 'date'>;
+export type EventFields = Omit<CalEvent, "id" | "date">;
 
 const DATABASE_VERSION = 2;
 
 // updated_at, deleted (soft delete) and dirty (changed since last sync) drive the server sync.
 export async function migrate(db: SQLiteDatabase) {
-  const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+  const row = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
   const current = row?.user_version ?? 0;
   if (current >= DATABASE_VERSION) return;
   if (current === 0) {
@@ -53,7 +53,7 @@ export const openDb = () =>
     return db;
   }));
 
-const COLUMNS = 'id, date, time, title, color, remind';
+const COLUMNS = "id, date, time, title, color, remind";
 
 // prefix is 'YYYY-MM' for a month or 'YYYY-MM-DD' for a day. Notes without a time come first.
 export const listEvents = (db: SQLiteDatabase, prefix: string) =>
@@ -69,23 +69,23 @@ export const listBetween = (db: SQLiteDatabase, from: string, to: string) =>
   );
 
 export const addEvent = (db: SQLiteDatabase, date: string, e: EventFields) =>
-  db.runAsync('INSERT INTO events (date, time, title, color, remind, updated_at) VALUES (?, ?, ?, ?, ?, ?)', [
-    date,
-    e.time,
-    e.title,
-    e.color,
-    e.remind,
-    Date.now(),
-  ]);
+  db.runAsync(
+    "INSERT INTO events (date, time, title, color, remind, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [date, e.time, e.title, e.color, e.remind, Date.now()],
+  );
 
 export const updateEvent = (db: SQLiteDatabase, id: string, e: EventFields) =>
   db.runAsync(
-    'UPDATE events SET time = ?, title = ?, color = ?, remind = ?, updated_at = ?, dirty = 1 WHERE id = ?',
+    "UPDATE events SET time = ?, title = ?, color = ?, remind = ?, updated_at = ?, dirty = 1 WHERE id = ?",
     [e.time, e.title, e.color, e.remind, Date.now(), id],
   );
 
 export const deleteEvent = (db: SQLiteDatabase, id: string) =>
-  db.runAsync('UPDATE events SET deleted = 1, updated_at = ?, dirty = 1 WHERE id = ?', [Date.now(), id]);
+  db.runAsync("UPDATE events SET deleted = 1, updated_at = ?, dirty = 1 WHERE id = ?", [
+    Date.now(),
+    id,
+  ]);
 
 export const getMeta = async (db: SQLiteDatabase, key: string) =>
-  (await db.getFirstAsync<{ value: string }>('SELECT value FROM meta WHERE key = ?', [key]))?.value ?? null;
+  (await db.getFirstAsync<{ value: string }>("SELECT value FROM meta WHERE key = ?", [key]))
+    ?.value ?? null;

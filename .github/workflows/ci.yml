@@ -27,8 +27,7 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
-      - run: bun run lint
-      - run: bun run typecheck
+      - run: bun run check
       - run: bun run test
       # server/ is its own package with its own lockfile and tests.
       - run: bun install --frozen-lockfile
